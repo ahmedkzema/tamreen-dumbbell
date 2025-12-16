@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gym Pro Web</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #ff9800;
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --text: #ffffff;
+            --text-sec: #b0b0b0;
+            --success: #4caf50;
+            --danger: #f44336;
+            --blue: #2196f3;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 70px; /* مساحة للشريط السفلي */
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* --- الهيكل العام --- */
+        .header {
+            background-color: var(--surface);
+            padding: 15px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+        }
+        .header h1 { margin: 0; font-size: 18px; }
+
+        .container { padding: 15px; max-width: 600px; margin: 0 auto; }
+        .page { display: none; animation: fadeIn 0.3s; }
+        .page.active { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- الكروت والعناصر --- */
+        .card {
+            background-color: var(--surface);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .input-group { margin-bottom: 15px; }
+        .input-group label { display: block; margin-bottom: 5px; color: var(--text-sec); }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 12px;
+            background: #2c2c2c;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: white;
+            box-sizing: border-box;
+        }
+
+        /* --- شريط التنقل السفلي --- */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: var(--surface);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid #333;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            color: var(--text-sec);
+            text-align: center;
+            font-size: 12px;
+            cursor: pointer;
+            background: none;
+            border: none;
+        }
+        .nav-item.active { color: var(--primary); }
+        .nav-item .material-icons { display: block; font-size: 24px; margin-bottom: 4px; }
+
+        /* --- صفحة التمارين --- */
+        .exercise-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid #333;
+            cursor: pointer;
+        }
+        .exercise-img {
+            width: 60px; height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #333;
+        }
+
+        /* --- صفحة الماء --- */
+        .water-circle {
+            width: 180px; height: 180px;
+            border-radius: 50%;
+            border: 10px solid #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 20px auto;
+            position: relative;
+        }
+        .water-circle.done { border-color: var(--blue); }
+
+        /* --- صفحة السجل --- */
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #333;
+        }
+
+        /* --- شاشة التفاصيل (Modal) --- */
+        #detail-view {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg);
+            z-index: 2000;
+            display: none;
+            overflow-y: auto;
+        }
+        .close-btn {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(0,0,0,0.5); border-radius: 50%; padding: 5px;
+            color: white; cursor: pointer;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1 id="header-title">خطة اليوم</h1>
+    </div>
+
+    <div id="page-workouts" class="page active container">
+        <div id="workout-list">
+            </div>
+    </div>
+
+    <div id="page-water" class="page container">
+        <div class="card" style="text-align: center;">
+            <h2>متابع شرب الماء</h2>
+            <div class="water-circle" id="water-indicator">
+                <span class="material-icons" style="font-size: 40px; color: var(--blue);">water_drop</span>
+                <h1 id="water-count" style="margin: 0; font-size: 40px;">0</h1>
+                <small>/ 8 أكواب</small>
+            </div>
+            <div style="display: flex; gap: 20px; justify-content: center;">
+                <button class="btn" style="background: var(--danger); width: auto;" onclick="updateWater(-1)">-</button>
+                <button class="btn" style="background: var(--blue); width: auto;" onclick="updateWater(1)">+</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h3>🔔 تذكير شرب الماء</h3>
+            <p style="font-size: 12px; color: #888;">سيعمل التنبيه فقط إذا كان الموقع مفتوحاً.</p>
+            <button class="btn" onclick="requestNotification()" style="background: #333;">تفعيل التنبيهات</button>
+        </div>
+    </div>
+
+    <div id="page-calc" class="page container">
+        <div class="card">
+            <h2>حاسبة السعرات (BMR)</h2>
+            <div class="input-group">
+                <label>الوزن (كجم)</label>
+                <input type="number" id="weight" placeholder="70">
+            </div>
+            <div class="input-group">
+                <label>الطول (سم)</label>
+                <input type="number" id="height" placeholder="170">
+            </div>
+            <div class="input-group">
+                <label>العمر</label>
+                <input type="number" id="age" placeholder="25">
+            </div>
+            <div class="input-group">
+                <label>الجنس</label>
+                <select id="gender">
+                    <option value="male">ذكر</option>
+                    <option value="female">أنثى</option>
+                </select>
+            </div>
+            <button class="btn" onclick="calculateCalories()">احسب احتياجي</button>
+            
+            <div id="result-box" style="margin-top: 20px; display: none; text-align: center; border-top: 1px solid #444; padding-top: 15px;">
+                <span style="color: var(--text-sec)">احتياجك اليومي للثبات:</span>
+                <h1 style="color: var(--primary); margin: 10px 0;" id="cal-result">0</h1>
+                <span>سعرة حرارية</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="page-history" class="page container">
+        <div class="card">
+            <h2>سجل تماريني</h2>
+            <div id="history-list">
+                <p style="text-align: center; color: #666;">لم تقم بأي تمرين بعد</p>
+            </div>
+            <button class="btn" style="background: #333; margin-top: 10px;" onclick="clearHistory()">مسح السجل</button>
+        </div>
+    </div>
+
+    <div id="detail-view">
+        <img id="detail-img" src="" style="width: 100%; height: 250px; object-fit: cover;">
+        <span class="material-icons close-btn" onclick="closeDetail()">close</span>
+        
+        <div class="container">
+            <h1 id="detail-title">عنوان التمرين</h1>
+            <p style="color: var(--primary);" id="detail-stats">3 جولات × 12 عدة</p>
+            
+            <div class="card">
+                <h3>طريقة الأداء</h3>
+                <p id="detail-desc" style="line-height: 1.6; color: #ddd;"></p>
+            </div>
+
+            <div class="card" style="text-align: center;">
+                <p>مؤقت الراحة</p>
+                <h1 id="timer-display" style="font-size: 50px; margin: 10px 0;">00:60</h1>
+                <button class="btn" onclick="startTimer()" id="timer-btn" style="background: var(--surface); border: 1px solid var(--primary);">ابدأ الراحة</button>
+            </div>
+
+            <button class="btn" style="background: var(--success); margin-bottom: 50px;" onclick="finishExercise()">
+                <span class="material-icons">check_circle</span>
+                أنهيت التمرين
+            </button>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('workouts', this)">
+            <span class="material-icons">fitness_center</span>
+            الخطة
+        </button>
+        <button class="nav-item" onclick="switchTab('water', this)">
+            <span class="material-icons">local_drink</span>
+            الماء
+        </button>
+        <button class="nav-item" onclick="switchTab('calc', this)">
+            <span class="material-icons">calculate</span>
+            السعرات
+        </button>
+        <button class="nav-item" onclick="switchTab('history', this)">
+            <span class="material-icons">history</span>
+            سجلي
+        </button>
+    </nav>
+
+    <script>
+        // --- 1. البيانات (Database) ---
+        const exercises = [
+            { id: 1, title: 'ضغط الصدر', muscle: 'صدر', sets: 3, reps: 12, img: 'https://i.ytimg.com/vi/VmB1G1K7v94/hqdefault.jpg', desc: 'استلقِ وارفع الدمبل للأعلى ثم انزل ببطء.' },
+            { id: 2, title: 'تجديف الدمبل', muscle: 'ظهر', sets: 3, reps: 10, img: 'https://i.ytimg.com/vi/pYcpY20QaE8/hqdefault.jpg', desc: 'ارتكز بيدك واسحب الدمبل لجانب خصرك.' },
+            { id: 3, title: 'جوبلت سكوات', muscle: 'أرجل', sets: 4, reps: 12, img: 'https://i.ytimg.com/vi/MeIiIdhvXT4/hqdefault.jpg', desc: 'احمل الدمبل عند صدرك وانزل وضع القرفصاء.' },
+            { id: 4, title: 'ضغط أكتاف', muscle: 'أكتاف', sets: 3, reps: 10, img: 'https://i.ytimg.com/vi/qEwKCR5JCog/hqdefault.jpg', desc: 'ادفع الدمبل فوق رأسك حتى تستقيم يدك.' },
+            { id: 5, title: 'بايسبس كيرل', muscle: 'ذراعين', sets: 3, reps: 15, img: 'https://i.ytimg.com/vi/ykJmrZ5v0Oo/hqdefault.jpg', desc: 'اثني ذراعك لرفع الدمبل باتجاه كتفك.' }
+        ];
+
+        let currentExercise = null;
+        let timerInterval = null;
+
+        // --- 2. التهيئة عند التشغيل ---
+        window.onload = function() {
+            renderExercises();
+            loadWater();
+            loadHistory();
+            checkNotificationPermission();
+        };
+
+        // --- 3. التنقل بين الصفحات ---
+        function switchTab(tabName, el) {
+            // إخفاء كل الصفحات
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            // إظهار الصفحة المطلوبة
+            document.getElementById('page-' + tabName).classList.add('active');
+            
+            // تحديث الأزرار السفلية
+            document.querySelectorAll('.nav-item').forEach(btn => btn.classList.remove('active'));
+            el.classList.add('active');
+
+            // تغيير العنوان
+            const titles = { 'workouts': 'خطة اليوم', 'water': 'متابع الماء', 'calc': 'حاسبة السعرات', 'history': 'سجلي' };
+            document.getElementById('header-title').innerText = titles[tabName];
+        }
+
+        // --- 4. منطق التمارين ---
+        function renderExercises() {
+            const list = document.getElementById('workout-list');
+            list.innerHTML = '';
+            exercises.forEach(ex => {
+                list.innerHTML += `
+                <div class="card exercise-item" onclick="openDetail(${ex.id})">
+                    <img src="${ex.img}" class="exercise-img" onerror="this.src='https://via.placeholder.com/60'">
+                    <div style="flex:1;">
+                        <div style="font-weight:bold; font-size:16px;">${ex.title}</div>
+                        <div style="color:var(--primary); font-size:14px;">${ex.muscle}</div>
+                        <div style="color:#777; font-size:12px;">${ex.sets} جولات × ${ex.reps} عدات</div>
+                    </div>
+                    <span class="material-icons" style="color:#555">arrow_back_ios</span>
+                </div>`;
+            });
+        }
+
+        function openDetail(id) {
+            currentExercise = exercises.find(e => e.id === id);
+            document.getElementById('detail-title').innerText = currentExercise.title;
+            document.getElementById('detail-stats').innerText = `${currentExercise.sets} جولات × ${currentExercise.reps} عدات`;
+            document.getElementById('detail-desc').innerText = currentExercise.description;
+            document.getElementById('detail-img').src = currentExercise.img;
+            document.getElementById('detail-view').style.display = 'block';
+            resetTimer();
+        }
+
+        function closeDetail() {
+            document.getElementById('detail-view').style.display = 'none';
+            clearInterval(timerInterval);
+        }
+
+        function finishExercise() {
+            // حفظ في السجل
+            const date = new Date().toLocaleString('ar-EG');
+            const historyItem = { title: currentExercise.title, date: date };
+            
+            let history = JSON.parse(localStorage.getItem('gym_history')) || [];
+            history.unshift(historyItem); // إضافة في البداية
+            localStorage.setItem('gym_history', JSON.stringify(history));
+            
+            loadHistory(); // تحديث القائمة
+            alert('تم حفظ التمرين بنجاح! 💪');
+            closeDetail();
+        }
+
+        // --- 5. منطق المؤقت ---
+        function startTimer() {
+            let timeLeft = 60;
+            const display = document.getElementById('timer-display');
+            clearInterval(timerInterval);
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                display.innerText = `00:${timeLeft < 10 ? '0'+timeLeft : timeLeft}`;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    alert('انتهت الراحة! ابدأ الجولة التالية');
+                    resetTimer();
+                }
+            }, 1000);
+        }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            document.getElementById('timer-display').innerText = '00:60';
+        }
+
+        // --- 6. منطق الماء (مع الحفظ اليومي) ---
+        function loadWater() {
+            const today = new Date().toDateString();
+            const savedDate = localStorage.getItem('water_date');
+            let count = 0;
+
+            // إذا كان تاريخ اليوم مختلف عن المحفوظ، ابدأ من الصفر
+            if (savedDate !== today) {
+                localStorage.setItem('water_date', today);
+                localStorage.setItem('water_count', 0);
+            } else {
+                count = parseInt(localStorage.getItem('water_count')) || 0;
+            }
+            updateWaterUI(count);
+        }
+
+        function updateWater(change) {
+            let count = parseInt(document.getElementById('water-count').innerText);
+            count += change;
+            if (count < 0) count = 0;
+            
+            localStorage.setItem('water_count', count);
+            updateWaterUI(count);
+        }
+
+        function updateWaterUI(count) {
+            document.getElementById('water-count').innerText = count;
+            const circle = document.getElementById('water-indicator');
+            if (count >= 8) circle.classList.add('done');
+            else circle.classList.remove('done');
+        }
+
+        // --- 7. منطق السعرات ---
+        function calculateCalories() {
+            const w = parseFloat(document.getElementById('weight').value);
+            const h = parseFloat(document.getElementById('height').value);
+            const a = parseFloat(document.getElementById('age').value);
+            const g = document.getElementById('gender').value;
+
+            if (!w || !h || !a) {
+                alert('الرجاء إدخال جميع البيانات');
+                return;
+            }
+
+            // معادلة Mifflin-St Jeor
+            let bmr = (10 * w) + (6.25 * h) - (5 * a);
+            bmr += (g === 'male') ? 5 : -161;
+
+            document.getElementById('cal-result').innerText = bmr.toFixed(0);
+            document.getElementById('result-box').style.display = 'block';
+        }
+
+        // --- 8. منطق السجل ---
+        function loadHistory() {
+            const history = JSON.parse(localStorage.getItem('gym_history')) || [];
+            const container = document.getElementById('history-list');
+            
+            if (history.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">لم تقم بأي تمرين بعد</p>';
+                return;
+            }
+
+            container.innerHTML = '';
+            history.forEach(item => {
+                container.innerHTML += `
+                <div class="history-item">
+                    <span>${item.title}</span>
+                    <span style="color: var(--text-sec); font-size: 12px;">${item.date}</span>
+                </div>`;
+            });
+        }
+
+        function clearHistory() {
+            if(confirm('هل أنت متأكد من مسح السجل؟')) {
+                localStorage.removeItem('gym_history');
+                loadHistory();
+            }
+        }
+
+        // --- 9. الإشعارات (توضيح) ---
+        function requestNotification() {
+            if (!("Notification" in window)) {
+                alert("المتصفح لا يدعم الإشعارات");
+            } else if (Notification.permission === "granted") {
+                new Notification("مدربك الشخصي", { body: "تذكير: اشرب الماء الآن! 💧" });
+            } else if (Notification.permission !== "denied") {
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        new Notification("مدربك الشخصي", { body: "تم تفعيل التنبيهات!" });
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
