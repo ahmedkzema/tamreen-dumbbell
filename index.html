@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>مدرب الدمبل المنزلي</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        /* --- 1. التصميم (CSS) --- */
+        :root {
+            --primary-color: #ff9800; /* اللون البرتقالي */
+            --bg-color: #121212;
+            --card-color: #2c2c2c;
+            --app-bar-color: #1f1f1f;
+            --text-color: #ffffff;
+            --sub-text-color: #b0b0b0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            user-select: none; /* منع تحديد النصوص */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* شريط العنوان */
+        header {
+            background-color: var(--app-bar-color);
+            padding: 15px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 50px;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        /* زر الرجوع */
+        .back-btn {
+            position: absolute;
+            right: 15px;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            display: none; /* مخفي في الشاشة الرئيسية */
+        }
+
+        /* الحاويات */
+        .container {
+            padding: 16px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* كارت التمرين في القائمة */
+        .exercise-card {
+            background-color: var(--card-color);
+            border-radius: 15px;
+            margin-bottom: 16px;
+            display: flex;
+            overflow: hidden;
+            height: 100px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+        }
+
+        .exercise-card:active {
+            transform: scale(0.98);
+        }
+
+        .card-img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+        }
+
+        .card-content {
+            padding: 0 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            flex: 1;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .card-muscle {
+            color: var(--primary-color);
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .card-sets {
+            color: var(--sub-text-color);
+            font-size: 12px;
+        }
+
+        /* شاشة التفاصيل */
+        #detail-view {
+            display: none; /* مخفي افتراضياً */
+            padding-bottom: 50px;
+        }
+
+        .hero-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 0 0 20px 20px;
+            mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            flex: 1;
+            background-color: var(--card-color);
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: bold;
+            display: block;
+        }
+
+        .stat-label {
+            color: var(--sub-text-color);
+            font-size: 12px;
+        }
+
+        .section-title {
+            color: var(--primary-color);
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .description {
+            line-height: 1.6;
+            color: #e0e0e0;
+            margin-bottom: 40px;
+        }
+
+        /* المؤقت */
+        .timer-container {
+            background-color: var(--card-color);
+            border-radius: 25px;
+            padding: 20px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: border-color 0.3s;
+        }
+
+        .timer-container.active {
+            border-color: var(--primary-color);
+        }
+
+        .timer-display {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 10px 0;
+            font-family: monospace;
+        }
+
+        .timer-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 10px rgba(255, 152, 0, 0.4);
+        }
+
+        .btn-icon {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+
+        /* تحسينات للجوال */
+        @media (min-width: 600px) {
+            body { background-color: #000; }
+            #app { 
+                background-color: var(--bg-color); 
+                min-height: 100vh;
+                box-shadow: 0 0 20px rgba(255,255,255,0.1);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app" style="max-width: 600px; margin: 0 auto;">
+    
+    <header>
+        <button class="back-btn" id="backBtn" onclick="goBack()">
+            <span class="material-icons">arrow_forward</span>
+        </button>
+        <h1 id="pageTitle">تمارين الدمبل</h1>
+    </header>
+
+    <div id="list-view" class="container">
+        </div>
+
+    <div id="detail-view">
+        <img id="detail-img" class="hero-image" src="" alt="تمرين">
+        
+        <div class="container">
+            <div class="stats-row">
+                <div class="stat-card">
+                    <span class="material-icons" style="color: var(--primary-color);">repeat</span>
+                    <span class="stat-value" id="detail-sets">0</span>
+                    <span class="stat-label">الجولات</span>
+                </div>
+                <div class="stat-card">
+                    <span class="material-icons" style="color: var(--primary-color);">fitness_center</span>
+                    <span class="stat-value" id="detail-reps">0</span>
+                    <span class="stat-label">العدات</span>
+                </div>
+            </div>
+
+            <div class="section-title">طريقة الأداء</div>
+            <div class="description" id="detail-desc"></div>
+
+            <div class="timer-container" id="timerBox">
+                <div style="color: var(--sub-text-color);">راحة بين الجولات</div>
+                <div class="timer-display" id="timerDisplay">00:60</div>
+                <div class="timer-controls">
+                    <button class="btn-primary" onclick="toggleTimer()">
+                        <span class="material-icons" id="playIcon">play_arrow</span>
+                    </button>
+                    <button class="btn-icon" onclick="resetTimer()">
+                        <span class="material-icons" style="font-size: 30px;">refresh</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- 2. البيانات (JavaScript) ---
+    const exercises = [
+        {
+            title: 'ضغط الصدر (Dumbbell Press)',
+            muscle: 'عضلة الصدر',
+            description: 'استلقِ على ظهرك، ارفع الدمبل للأعلى بخط مستقيم، ثم انزل ببطء حتى تشعر بتمدد عضلة الصدر.',
+            sets: 3,
+            reps: 12,
+            imageUrl: 'https://i.ytimg.com/vi/VmB1G1K7v94/hqdefault.jpg',
+        },
+        {
+            title: 'تجديف الدمبل (One Arm Row)',
+            muscle: 'عضلة الظهر',
+            description: 'ارتكز بيدك وركبتك على البنش، حافظ على ظهرك مستقيماً، واسحب الدمبل باتجاه جيب بنطالك.',
+            sets: 3,
+            reps: 10,
+            imageUrl: 'https://i.ytimg.com/vi/pYcpY20QaE8/hqdefault.jpg',
+        },
+        {
+            title: 'القرفصاء بالكأس (Goblet Squat)',
+            muscle: 'الأرجل',
+            description: 'احمل الدمبل عند صدرك بكلتا يديك، انزل بوضع الجلوس مع الحفاظ على صدرك مرفوعاً.',
+            sets: 4,
+            reps: 12,
+            imageUrl: 'https://i.ytimg.com/vi/MeIiIdhvXT4/hqdefault.jpg',
+        },
+        {
+            title: 'ضغط الأكتاف (Shoulder Press)',
+            muscle: 'الأكتاف',
+            description: 'اجلس على كرسي بظهر قائم، ادفع الدمبل فوق رأسك حتى تستقيم ذراعك تماماً ثم انزل للأسفل.',
+            sets: 3,
+            reps: 10,
+            imageUrl: 'https://i.ytimg.com/vi/qEwKCR5JCog/hqdefault.jpg',
+        },
+        {
+            title: 'بايسبس كيرل (Bicep Curl)',
+            muscle: 'الذراعين (باي)',
+            description: 'قف بثبات، الصق كوعك بجانبك، وارفع الدمبل للأعلى بتركيز على العضلة الأمامية للذراع.',
+            sets: 3,
+            reps: 15,
+            imageUrl: 'https://i.ytimg.com/vi/ykJmrZ5v0Oo/hqdefault.jpg',
+        }
+    ];
+
+    // --- المنطق والتحكم ---
+    const listView = document.getElementById('list-view');
+    const detailView = document.getElementById('detail-view');
+    const backBtn = document.getElementById('backBtn');
+    const pageTitle = document.getElementById('pageTitle');
+    
+    // متغيرات المؤقت
+    let timerInterval;
+    let timeLeft = 60;
+    let isRunning = false;
+
+    // 1. تشغيل التطبيق (Render List)
+    function initApp() {
+        listView.innerHTML = '';
+        exercises.forEach((ex, index) => {
+            const card = document.createElement('div');
+            card.className = 'exercise-card';
+            card.onclick = () => showDetail(index);
+            card.innerHTML = `
+                <img src="${ex.imageUrl}" class="card-img" alt="${ex.title}">
+                <div class="card-content">
+                    <div class="card-title">${ex.title}</div>
+                    <div class="card-muscle">${ex.muscle}</div>
+                    <div class="card-sets">${ex.sets} جولات × ${ex.reps} عدات</div>
+                </div>
+                <span class="material-icons" style="color: grey; align-self: center; margin-left: 10px;">arrow_back_ios</span>
+            `;
+            listView.appendChild(card);
+        });
+    }
+
+    // 2. عرض التفاصيل
+    function showDetail(index) {
+        const ex = exercises[index];
+        
+        // تعبئة البيانات
+        document.getElementById('detail-img').src = ex.imageUrl;
+        document.getElementById('detail-sets').innerText = ex.sets;
+        document.getElementById('detail-reps').innerText = ex.reps;
+        document.getElementById('detail-desc').innerText = ex.description;
+        pageTitle.innerText = ex.title;
+
+        // تبديل الشاشات
+        listView.style.display = 'none';
+        detailView.style.display = 'block';
+        backBtn.style.display = 'block';
+        
+        // تصفير المؤقت عند الدخول
+        resetTimer();
+        window.scrollTo(0, 0);
+    }
+
+    // 3. الرجوع للقائمة
+    function goBack() {
+        detailView.style.display = 'none';
+        listView.style.display = 'block';
+        backBtn.style.display = 'none';
+        pageTitle.innerText = 'تمارين الدمبل';
+        
+        // إيقاف المؤقت عند الخروج
+        clearInterval(timerInterval);
+        isRunning = false;
+    }
+
+    // 4. منطق المؤقت
+    function toggleTimer() {
+        if (isRunning) return; // إذا كان يعمل بالفعل لا تفعل شيئاً
+
+        isRunning = true;
+        document.getElementById('timerBox').classList.add('active');
+        document.getElementById('playIcon').innerText = 'pause'; // تغيير الأيقونة (اختياري)
+        
+        timerInterval = setInterval(() => {
+            if (timeLeft > 0) {
+                timeLeft--;
+                updateTimerUI();
+            } else {
+                // انتهى الوقت
+                clearInterval(timerInterval);
+                isRunning = false;
+                timeLeft = 60; // إعادة تعيين
+                document.getElementById('timerBox').classList.remove('active');
+                document.getElementById('playIcon').innerText = 'play_arrow';
+                updateTimerUI();
+                // يمكن إضافة صوت هنا
+                alert('انتهت الراحة! ابدأ الجولة التالية.');
+            }
+        }, 1000);
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        isRunning = false;
+        timeLeft = 60;
+        document.getElementById('timerBox').classList.remove('active');
+        document.getElementById('playIcon').innerText = 'play_arrow';
+        updateTimerUI();
+    }
+
+    function updateTimerUI() {
+        // تنسيق الوقت ليظهر خانتين (00:09)
+        const seconds = timeLeft < 10 ? '0' + timeLeft : timeLeft;
+        document.getElementById('timerDisplay').innerText = `00:${seconds}`;
+    }
+
+    // بدء التطبيق
+    initApp();
+
+</script>
+</body>
+</html>
